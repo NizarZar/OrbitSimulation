@@ -3,6 +3,8 @@
 #include <vector>
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 struct Vector {
 	double x, y, z;
@@ -31,6 +33,6 @@ public:
 	void updatePosition(double dt);
 	void updateVelocity(Vector acceleration, double dt);
 	void setupCircle();
-	void draw();
+	void draw(Shader& shader);
 
 };

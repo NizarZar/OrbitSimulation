@@ -1,20 +1,25 @@
 #include "Shader.h"
 #include "Body.h"
 #include <cmath>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/type_ptr.hpp>
+
 
 
 #define PI 3.14159265358979323846
 
 const unsigned int SCREEN_WIDTH = 800;
 const unsigned int SCREEN_HEIGHT = 600;
-// constant of gravitation
+// constant of gravitation and distance betwen earth and moon
 const double G = 6.67430e-11;
-// 1 hour in seconds
-double dt = 3600;
+// scales
+const double distanceScale = 1e11; // 1 unit = 1000km
+const double timeScale = 60; // each simulation step is one hour
+const double G_scaled = G / (distanceScale * distanceScale * distanceScale / timeScale * timeScale); // adjusted G for scaled units
+// real distance
+double realDistance = 384400;
+double scaledDistance = realDistance / distanceScale;
+
 // segments
-const int segments = 360;
+const int segments = 36;
 // bodies
 std::vector<Body*> bodies;
 
@@ -23,7 +28,7 @@ std::unique_ptr<Body> moon;
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow* window);
-void updateSimulation();
+void updateSimulation(double dt);
 
 
 int main() {
@@ -52,14 +57,19 @@ int main() {
 	// shader initialization
 	Shader shader("shaders/default.vert", "shaders/default.frag");
 
-	glm::mat4 view = glm::mat4(1.0f);
+	glm::mat4 view = glm::lookAt(
+		glm::vec3(0.0f, 0.0f, 5.0f ), // Move the camera back enough to see both objects
+		glm::vec3(0.0f, 0.0f, 0.0f),
+		glm::vec3(0.0f, 1.0f, 0.0f)
+	);
 	view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
 
-	glm::mat4 projection;
+	glm::mat4 projection = glm::mat4(1.0f);
 	projection = glm::perspective(glm::radians(45.0f), float(SCREEN_WIDTH) / float(SCREEN_HEIGHT), 0.1f, 100.0f);
 
-	earth = std::make_unique<Body>(Vector{ 0,0 }, Vector{ 0,0 }, 5.972e24, 0.5f, glm::vec3(0.0f, 0.05f, 1.0f), segments);
-	moon = std::make_unique<Body>(Vector{ 384400e3, 0 }, Vector{ 0,1022 }, 7.342e22, 0.1f, glm::vec3(0.8f, 0.8f, 0.8f), segments);
+	earth = std::make_unique<Body>(Vector{ 0.0f, 0.0f, 0.0f }, Vector{ 0,0,0 }, 5.972e24, 0.5f, glm::vec3(0.0f, 0.05f, 1.0f), 36);
+	moon = std::make_unique<Body>(Vector{ 1.5f, 0.0f, 0.0f }, Vector{ 0, sqrt(G_scaled * earth-> mass / scaledDistance),0}, 7.342e22, 0.1f, glm::vec3(0.8f, 0.8f, 0.8f), 36);
+
 	earth->setupCircle();
 	moon->setupCircle();
 
@@ -71,25 +81,23 @@ int main() {
 		processInput(window);
 
 		// simulation
-		updateSimulation();
+		updateSimulation(3600);
 
 		// rendering
 		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		shader.use();
+
 		int viewLocation = glGetUniformLocation(shader.getID(), "view");
 		glUniformMatrix4fv(viewLocation, 1, GL_FALSE, &view[0][0]);
 
 		int projectionLocation = glGetUniformLocation(shader.getID(), "projection");
 		glUniformMatrix4fv(projectionLocation, 1, GL_FALSE, glm::value_ptr(projection));
 
-
 		for (auto& body : bodies) {
-			body->draw();
+			body->draw(shader);
 		}
-
-		
 
 		// swap buffers and pull IO events (callbacks)
 		glfwSwapBuffers(window);
@@ -112,21 +120,29 @@ void processInput(GLFWwindow* window) {
 	}
 }
 
-void updateSimulation() {
-	// bodies[0] = earth
-	// bodies[1] = moon
-	Vector r = { moon->position.x - earth->position.x, moon->position.y - earth->position.y};
+
+void updateSimulation(double dt) {
+	Vector r = { moon->position.x - earth->position.x, moon->position.y - earth->position.y };
 	double distance = sqrt(r.x * r.x + r.y * r.y);
-	double forceMagnitude = G * earth->mass * earth->mass / (distance * distance);
+	double forceMagnitude = G_scaled * earth->mass * moon->mass / (distance * distance);
 	Vector force = { forceMagnitude * r.x / distance, forceMagnitude * r.y / distance };
 
-	Vector earth_a = { force.x / earth->mass, force.y / earth->mass};
-	Vector moon_a = { -force.x / moon->mass, -force.y / moon->mass};
+	Vector earth_a = { force.x / earth->mass, force.y / earth->mass };
+	Vector moon_a = { -force.x / moon->mass, -force.y / moon->mass };
 
 	earth->updateVelocity(earth_a, dt);
 	moon->updateVelocity(moon_a, dt);
 
 	earth->updatePosition(dt);
 	moon->updatePosition(dt);
+
+	// Detailed debugging outputs
+	std::cout << "Distance: " << distance << std::endl;
+	std::cout << "Force Magnitude: " << forceMagnitude << std::endl;
+	std::cout << "Earth Velocity: (" << earth->velocity.x << ", " << earth->velocity.y << ")" << std::endl;
+	std::cout << "Moon Velocity: (" << moon->velocity.x << ", " << moon->velocity.y << ")" << std::endl;
+	std::cout << "Earth Position: (" << earth->position.x << ", " << earth->position.y << ")" << std::endl;
+	std::cout << "Moon Position: (" << moon->position.x << ", " << moon->position.y << ")" << std::endl;
 }
+
 

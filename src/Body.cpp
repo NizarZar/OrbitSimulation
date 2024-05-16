@@ -60,7 +60,12 @@ void Body::setupCircle() {
 
 }
 
-void Body::draw() {
+void Body::draw(Shader& shader) {
+
+	shader.use();
+	glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(position.x, position.y, position.z));
+	glUniformMatrix4fv(glGetUniformLocation(shader.getID(), "model"), 1, GL_FALSE, glm::value_ptr(model));
+
 	glBindVertexArray(VAO);
 	glDrawArrays(GL_TRIANGLE_FAN, 0, segments+2);
 	glBindVertexArray(0);
