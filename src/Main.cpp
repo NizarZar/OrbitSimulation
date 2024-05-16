@@ -6,13 +6,13 @@
 
 #define PI 3.14159265358979323846
 
-const unsigned int SCREEN_WIDTH = 800;
-const unsigned int SCREEN_HEIGHT = 600;
+const unsigned int SCREEN_WIDTH = 1280;
+const unsigned int SCREEN_HEIGHT = 720;
 // constant of gravitation and distance betwen earth and moon
 const double G = 6.67430e-11;
 // scales
 const double distanceScale = 1e11; // 1 unit = 1000km
-const double timeScale = 60; // each simulation step is one hour
+const double timeScale = 3600; // each simulation step is one hour
 const double G_scaled = G / (distanceScale * distanceScale * distanceScale / timeScale * timeScale); // adjusted G for scaled units
 // real distance
 double realDistance = 384400;
@@ -81,7 +81,7 @@ int main() {
 		processInput(window);
 
 		// simulation
-		updateSimulation(3600);
+		updateSimulation(260000);
 
 		// rendering
 		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
@@ -122,19 +122,21 @@ void processInput(GLFWwindow* window) {
 
 
 void updateSimulation(double dt) {
-	Vector r = { moon->position.x - earth->position.x, moon->position.y - earth->position.y };
-	double distance = sqrt(r.x * r.x + r.y * r.y);
+	Vector r = moon->position - earth->position;
+	double distance = r.magnitude();
 	double forceMagnitude = G_scaled * earth->mass * moon->mass / (distance * distance);
-	Vector force = { forceMagnitude * r.x / distance, forceMagnitude * r.y / distance };
+	Vector forceDirection = r.normalize();
 
-	Vector earth_a = { force.x / earth->mass, force.y / earth->mass };
-	Vector moon_a = { -force.x / moon->mass, -force.y / moon->mass };
+	Vector force = forceDirection * forceMagnitude;
 
-	earth->updateVelocity(earth_a, dt);
-	moon->updateVelocity(moon_a, dt);
+	Vector earthAcceleration = force / earth->mass;
+	Vector moonAcceleration = -force / moon->mass;
 
-	earth->updatePosition(dt);
-	moon->updatePosition(dt);
+	earth->velocity = earth->velocity + earthAcceleration * dt;
+	moon->velocity = moon->velocity + moonAcceleration * dt;
+
+	earth->position = earth->position + earth->velocity * dt;
+	moon->position = moon->position + moon->velocity * dt;
 
 	// Detailed debugging outputs
 	std::cout << "Distance: " << distance << std::endl;

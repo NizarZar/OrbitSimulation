@@ -7,15 +7,45 @@
 #include <glm/gtc/type_ptr.hpp>
 
 struct Vector {
-	double x, y, z;
+    double x, y, z;
 
-	Vector operator+(const Vector& other) const {
-		return { x + other.x, y + other.y, z + other.z };
-	}
-	Vector operator*(float scalar) const {
-		return { x * scalar, y * scalar, z * scalar };
-	}
+    // Addition
+    Vector operator+(const Vector& other) const {
+        return { x + other.x, y + other.y, z + other.z };
+    }
+
+    // Subtraction
+    Vector operator-(const Vector& other) const {
+        return { x - other.x, y - other.y, z - other.z };
+    }
+
+    // Scalar multiplication
+    Vector operator*(double scalar) const {
+        return { x * scalar, y * scalar, z * scalar };
+    }
+
+    // Scalar division
+    Vector operator/(double scalar) const {
+        return { x / scalar, y / scalar, z / scalar }; // Make sure scalar is not zero when using this operator
+    }
+    // Vector negation
+    Vector operator-() const {
+        return { -x, -y, -z };
+    }
+
+    // Compute magnitude of the vector
+    double magnitude() const {
+        return sqrt(x * x + y * y + z * z);
+    }
+
+    // Normalize the vector
+    Vector normalize() const {
+        double mag = magnitude();
+        if (mag == 0) return { 0, 0, 0 };  // Prevent division by zero
+        return { x / mag, y / mag, z / mag };
+    }
 };
+
 
 class Body {
 public:
