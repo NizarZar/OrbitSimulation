@@ -14,6 +14,29 @@ std::string get_file_contents(const char* fileName) {
     in.close();
     return contents;
 }
+bool checkShaderCompilation(GLuint shader) {
+    GLint success;
+    GLchar infoLog[512];
+    glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
+    if (!success) {
+        glGetShaderInfoLog(shader, 512, NULL, infoLog);
+        std::cout << "ERROR::SHADER::COMPILATION_FAILED\n" << infoLog << std::endl;
+        return false;
+    }
+    return true;
+}
+
+bool checkShaderLinking(GLuint program) {
+    GLint success;
+    GLchar infoLog[512];
+    glGetProgramiv(program, GL_LINK_STATUS, &success);
+    if (!success) {
+        glGetProgramInfoLog(program, 512, NULL, infoLog);
+        std::cout << "ERROR::PROGRAM::LINKING_FAILED\n" << infoLog << std::endl;
+        return false;
+    }
+    return true;
+}
 
 Shader::Shader(const char* vertexFile, const char* fragmentFile) {
 	std::string vertexCode = get_file_contents(vertexFile);
@@ -26,17 +49,20 @@ Shader::Shader(const char* vertexFile, const char* fragmentFile) {
 
 	glShaderSource(vertexShader, 1, &vertexSource, NULL);
 	glCompileShader(vertexShader);
+    checkShaderCompilation(vertexShader);
 
 	unsigned int fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
 
 	glShaderSource(fragmentShader, 1, &fragmentSource, NULL);
 	glCompileShader(fragmentShader);
+    checkShaderCompilation(fragmentShader);
 
 	ID = glCreateProgram();
 
 	glAttachShader(ID, vertexShader);
 	glAttachShader(ID, fragmentShader);
 	glLinkProgram(ID);
+    checkShaderLinking(ID);
 
 	glDeleteShader(vertexShader);
 	glDeleteShader(fragmentShader);
