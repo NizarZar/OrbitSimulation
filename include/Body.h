@@ -6,7 +6,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-struct Vector {
+/*struct Vector {
     double x, y, z;
 
     // Addition
@@ -45,12 +45,13 @@ struct Vector {
         return { x / mag, y / mag, z / mag };
     }
 };
+*/
 
 
 class Body {
 public:
-	Vector position;
-	Vector velocity;
+    glm::vec3 position;
+	glm::vec3 velocity;
 	double mass;
 	float radius;
 	glm::vec3 color;
@@ -58,10 +59,10 @@ public:
 	unsigned int VBO, VAO;
 
 
-	Body(Vector pos, Vector vel, double m, float radius, glm::vec3 color, int segments);
+	Body(glm::vec3 pos, glm::vec3 vel, double m, float radius, glm::vec3 color, int segments);
 	~Body();
 	void updatePosition(double dt);
-	void updateVelocity(Vector acceleration, double dt);
+	void updateVelocity(glm::vec3 acceleration, double dt);
 	void setupCircle();
 	void draw(Shader& shader);
 

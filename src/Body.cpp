@@ -2,7 +2,7 @@
 
 #define PI 3.14159265358979323846
 
-Body::Body(Vector pos, Vector vel, double m, float radius, glm::vec3 color, int segments) {
+Body::Body(glm::vec3 pos, glm::vec3 vel, double m, float radius, glm::vec3 color, int segments) {
 	this->position = pos;
 	this->velocity = vel;
 	this->mass = m;
@@ -18,11 +18,11 @@ Body::~Body() {
 }
 
 void Body::updatePosition(double dt) {
-	position = position + (velocity * dt);
+	position = position + (velocity.operator*=(dt));
 }
 
-void Body::updateVelocity(Vector acceleration, double dt) {
-	velocity = velocity + (acceleration * dt);
+void Body::updateVelocity(glm::vec3 acceleration, double dt) {
+	velocity = velocity + (acceleration.operator*=(dt));
 }
 
 void Body::setupCircle() {
