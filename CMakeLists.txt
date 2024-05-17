@@ -16,7 +16,8 @@ add_executable(BodyProblem
         src/Body.cpp
         src/glad.c
         src/Main.cpp
-        src/Shader.cpp)
+        src/Shader.cpp
+        src/Simulation.cpp)
 
 # load shaders folder
 file(COPY ${CMAKE_SOURCE_DIR}/shaders DESTINATION ${CMAKE_BINARY_DIR})

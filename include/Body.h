@@ -14,14 +14,12 @@ public:
 	double mass;
 	float radius;
 	glm::vec3 color{};
-	int segments;
-	unsigned int VBO{}, VAO{};
+	unsigned int VBO{}, VAO{}, EBO{};
 
 
-	Body(glm::vec3 pos, glm::vec3 vel, double mass, float radius, glm::vec3 color, int segments);
+	Body(glm::vec3 position, glm::vec3 velocity, float mass, float radius, glm::vec3 color);
 	~Body();
-	void update(double dt, std::vector<Body*>& bodies);
 	void draw(Shader& shader);
 private:
-    void setupCircle();
+    void setupSphere();
 };

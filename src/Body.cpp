@@ -1,68 +1,83 @@
 #include "Body.h"
 
 // constants
-const double PI = 3.14159265358979323846;
 const double G = 6.67430e-11;
-// Constants for simulation
+// Constants for simulation;
+std::vector<unsigned int> indices;
 
-Body::Body(glm::vec3 pos, glm::vec3 vel, double mass, float radius, glm::vec3 color, int segments) :
-        position(pos), velocity(vel), mass(mass), radius(radius), color(color), segments(segments)
+Body::Body(glm::vec3 position, glm::vec3 velocity, float mass, float radius, glm::vec3 color) :
+        position(position), velocity(velocity), mass(mass), radius(radius), color(color)
     {
-	setupCircle();
+	setupSphere();
 
 }
 Body::~Body() {
 	glDeleteVertexArrays(1, &VAO);
 	glDeleteBuffers(1, &VBO);
+    glDeleteBuffers(1, &EBO);
 }
 
-void Body::update(double dt, std::vector<Body*> &bodies) {
-    glm::vec3 totalForce(1.0f);
-    for(const Body* other : bodies){
-        if(this != other){
-            glm::vec3 r = other->position - this->position;
-            double distance = glm::length(r);
-            if(distance == 0) continue; // avoid zero division
-            double forceMagnitude = G * this->mass * other->mass / (distance * distance);
-            glm::vec3 forceDirection = glm::normalize(r);
-            totalForce += forceDirection * static_cast<float>(forceMagnitude);
+
+void Body::setupSphere() {
+    // Generate vertices and indices for a UV sphere
+    int stacks = 20;
+    int slices = 20;
+    std::vector<float> vertices;
+    for (int i = 0; i <= stacks; ++i) {
+        float stackAngle = M_PI / 2 - i * M_PI / stacks;
+        float xy = radius * cosf(stackAngle);
+        float z = radius * sinf(stackAngle);
+        for (int j = 0; j <= slices; ++j) {
+            float sliceAngle = j * 2 * M_PI / slices;
+            float x = xy * cosf(sliceAngle);
+            float y = xy * sinf(sliceAngle);
+            vertices.push_back(x);
+            vertices.push_back(y);
+            vertices.push_back(z);
+            vertices.push_back(color.r);
+            vertices.push_back(color.g);
+            vertices.push_back(color.b);
         }
     }
 
-    glm::vec3 acceleration = totalForce / static_cast<float>(this->mass);
-    velocity += acceleration.operator*=(dt);
-    position += velocity.operator*=(dt);
-}
 
-void Body::setupCircle() {
-
-	// center vertex
-    std::vector<float> vertices;
-    for (int i = 0; i <= segments; ++i) {
-        float theta = 2.0f * PI * float(i) / float(segments);
-        float x = radius * cosf(theta);
-        float y = radius * sinf(theta);
-        vertices.push_back(x);
-        vertices.push_back(y);
-        vertices.push_back(0.0f);
-        vertices.push_back(color.r);
-        vertices.push_back(color.g);
-        vertices.push_back(color.b);
+    for (int i = 0; i < stacks; ++i) {
+        int k1 = i * (slices + 1);
+        int k2 = k1 + slices + 1;
+        for (int j = 0; j < slices; ++j, ++k1, ++k2) {
+            if (i != 0) {
+                indices.push_back(k1);
+                indices.push_back(k2);
+                indices.push_back(k1 + 1);
+            }
+            if (i != (stacks - 1)) {
+                indices.push_back(k1 + 1);
+                indices.push_back(k2);
+                indices.push_back(k2 + 1);
+            }
+        }
     }
 
-	glGenVertexArrays(1, &VAO);
-	glGenBuffers(1, &VBO);
-	glBindVertexArray(VAO);
-	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float), vertices.data(), GL_STATIC_DRAW);
+    glGenVertexArrays(1, &VAO);
+    glGenBuffers(1, &VBO);
+    glBindVertexArray(VAO);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float), vertices.data(), GL_STATIC_DRAW);
 
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
-	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
-	glEnableVertexAttribArray(1);
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-	glBindVertexArray(0);
+    unsigned int EBO;
+    glGenBuffers(1, &EBO);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), indices.data(), GL_STATIC_DRAW);
 
+    // position
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
+
+    // color
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
+    glEnableVertexAttribArray(1);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindVertexArray(0);
 }
 
 void Body::draw(Shader& shader) {
@@ -73,7 +88,7 @@ void Body::draw(Shader& shader) {
 	glUniformMatrix4fv(glGetUniformLocation(shader.getID(), "model"), 1, GL_FALSE, glm::value_ptr(model));
 
 	glBindVertexArray(VAO);
-	glDrawArrays(GL_TRIANGLE_FAN, 0, segments+2);
+	glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
 	glBindVertexArray(0);
 }
 
