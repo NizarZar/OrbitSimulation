@@ -14,12 +14,13 @@ public:
 	double mass;
 	float radius;
 	glm::vec3 color{};
-	unsigned int VBO{}, VAO{}, EBO{};
+	unsigned int VBO, VAO, EBO;
 
 
 	Body(glm::vec3 position, glm::vec3 velocity, float mass, float radius, glm::vec3 color);
 	~Body();
 	void draw(Shader& shader);
 private:
+    std::vector<unsigned int> indices;
     void setupSphere();
 };

@@ -3,7 +3,6 @@
 // constants
 const double G = 6.67430e-11;
 // Constants for simulation;
-std::vector<unsigned int> indices;
 
 Body::Body(glm::vec3 position, glm::vec3 velocity, float mass, float radius, glm::vec3 color) :
         position(position), velocity(velocity), mass(mass), radius(radius), color(color)
@@ -60,12 +59,12 @@ void Body::setupSphere() {
 
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
+    glGenBuffers(1, &EBO);
+
     glBindVertexArray(VAO);
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float), vertices.data(), GL_STATIC_DRAW);
 
-    unsigned int EBO;
-    glGenBuffers(1, &EBO);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), indices.data(), GL_STATIC_DRAW);
 
@@ -84,7 +83,7 @@ void Body::draw(Shader& shader) {
 
 	shader.use();
 	glm::mat4 model = glm::translate(glm::mat4(1.0f), this->position);
-    model = glm::scale(model, glm::vec3(this->radius));
+    //model = glm::scale(model, glm::vec3(this->radius));
 	glUniformMatrix4fv(glGetUniformLocation(shader.getID(), "model"), 1, GL_FALSE, glm::value_ptr(model));
 
 	glBindVertexArray(VAO);

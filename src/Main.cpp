@@ -9,14 +9,10 @@ const unsigned int SCREEN_HEIGHT = 600;
 
 
 // bodies
-std::vector<Body*> bodies;
 std::unique_ptr<Body> earth;
 std::unique_ptr<Body> moon;
 std::unique_ptr<Body> venus;
 
-//
-const double EARTH_MASS = 1000000000.0f;
-const double MOON_MASS = 1000.f;
 double G = 6.67430e-11;
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
@@ -51,14 +47,16 @@ int main() {
     // initialize simulator
     Simulation simulation;
 
-    Body earth(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f), 100.f, 0.5f, glm::vec3(0.0f, 0.5f, 1.0f));
-    Body moon(glm::vec3(2.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f), 10.f, 0.27f, glm::vec3(0.8f, 0.8f, 0.8f));
+    earth = std::make_unique<Body>(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f), 10000.f, 0.3f, glm::vec3(0.0f, 0.5f, 1.0f));
+    moon = std::make_unique<Body>(glm::vec3(2.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.01f, 0.0f), 10.f, 0.1f, glm::vec3(0.8f, 0.8f, 0.8f));
+    venus = std::make_unique<Body>(glm::vec3(-2.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f), 10.f, 0.27f, glm::vec3(1.f, 0.5f, 0.3f));
+    simulation.addBody(std::move(moon));
+    simulation.addBody(std::move(earth));
+    //simulation.addBody(std::move(venus));
 
-    simulation.addBody(earth);
-    simulation.addBody(moon);
 	//glm::mat4 view = glm::mat4(1.0f);
     glm::mat4 view = glm::lookAt(
-            glm::vec3(0.0f, 0.0f, 2.0f ), // Move the camera back enough to see both objects
+            glm::vec3(0.0f, 0.0f, 5.0f ), // Move the camera back enough to see both objects
             glm::vec3(0.0f, 0.0f, 0.0f),
             glm::vec3(0.0f, 1.0f, 0.0f)
     );
@@ -78,7 +76,7 @@ int main() {
 		processInput(window);
 
         // update simulation;
-        //simulation.update(deltaTime);
+        simulation.update(deltaTime);
         // rendering
 		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -96,6 +94,7 @@ int main() {
 		// swap buffers and pull IO events (callbacks)
 		glfwSwapBuffers(window);
 		glfwPollEvents();
+
 
 
 	}
