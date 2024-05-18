@@ -17,19 +17,20 @@ glm::vec3 Simulation::calculateGravitationalForce(Body &body1, Body &body2) {
 }
 
 void Simulation::update(float deltaTime) {
+    std::vector<glm::vec3> forces(bodies.size(), glm::vec3(0.0f));
+
     for (size_t i = 0; i < bodies.size(); ++i) {
-        glm::vec3 totalForce(0.0f);
         for (size_t j = 0; j < bodies.size(); ++j) {
             if (i != j) {
-                totalForce += calculateGravitationalForce(*bodies[i], *bodies[j]);
+                forces[i] += calculateGravitationalForce(*bodies[i], *bodies[j]);
             }
         }
-        glm::vec3 acceleration = totalForce.operator/=(bodies[i]->mass);
-        bodies[i]->velocity += acceleration * deltaTime;
     }
 
-    for (auto& body : bodies) {
-        body->position += body->velocity * deltaTime;
+    for (size_t i = 0; i < bodies.size(); ++i) {
+        glm::vec3 acceleration = forces[i].operator/=(bodies[i]->mass);
+        bodies[i]->velocity += acceleration * deltaTime;
+        bodies[i]->position += bodies[i]->velocity * deltaTime;
     }
 }
 
