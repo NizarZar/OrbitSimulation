@@ -12,6 +12,7 @@ const unsigned int SCREEN_HEIGHT = 600;
 std::unique_ptr<Body> earth;
 std::unique_ptr<Body> moon;
 std::unique_ptr<Body> venus;
+std::unique_ptr<Body> sun;
 
 double G = 6.67430e-11;
 
@@ -46,32 +47,49 @@ int main() {
 
     // initialize simulator
     Simulation simulation;
-    glm::vec3 earthPosition(0.0f, 0.0f, 0.0f);
-    glm::vec3 earthVelocity(0.0f, 0.0f, 0.0f);
-    float earthMass = 10000.f;
-    float earthRadius = 0.5f;
 
-    glm::vec3 moonPosition(2.0f, 0.0f, 0.0f);
-    float distance = glm::length(moonPosition - earthPosition);
-    float moonVelocityY = sqrt(G * earthMass / distance);
+    glm::vec3 sunPosition(0.0f, 0.0f, 0.0f);
+    glm::vec3 sunVelocity(0.0f, 0.0f, 0.0f);
+    float sunMass = 10000.f;
+    float sunRadius = 1.f;
+
+    glm::vec3 earthPosition(10.f, 0.0f, 0.0f);
+    float distanceE = glm::length(earthPosition - sunPosition);
+    float earthVelocityY = sqrt(G * sunMass / distanceE);
+    glm::vec3 earthVelocity(0.0f, earthVelocityY, 0.0f);
+    float earthMass = 100.f;
+    float earthRadius = 0.3f;
+
+    glm::vec3 moonPosition(10.4f, 0.0f, 0.0f);
+    float distanceM = glm::length(moonPosition - earthPosition);
+    float moonVelocityY = sqrt(G * earthMass / distanceM);
     glm::vec3 moonVelocity(0.0f, moonVelocityY, 0.0f);
-    float moonMass = 1.f;
-    float moonRadius = 0.27f;
+    float moonMass = 5.f;
+    float moonRadius = 0.08f;
+
+    glm::vec3 venusPosition(-5.5f, 0.0f, 0.0f);
+    float distanceV = glm::length(venusPosition - sunPosition);
+    float venusVelocityY = sqrt(G * sunMass / distanceV);
+    glm::vec3 venusVelocity(0.0f, venusVelocityY, 0.0f);
+    float venusMass = 50.f;
+    float venusRadius = 0.11f;
+
 
     earth = std::make_unique<Body>(earthPosition, earthVelocity, earthMass, earthRadius, glm::vec3(0.0f, 0.5f, 1.0f));
     moon = std::make_unique<Body>(moonPosition, moonVelocity, moonMass, moonRadius, glm::vec3(0.8f, 0.8f, 0.8f));
-    venus = std::make_unique<Body>(glm::vec3(-2.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0015f, 0.0f), 10.f, 0.27f, glm::vec3(1.f, 0.5f, 0.3f));
+    venus = std::make_unique<Body>(venusPosition, venusVelocity, venusMass, venusRadius, glm::vec3(0.4f, 0.5f, 0.3f));
+    sun = std::make_unique<Body>(sunPosition, sunVelocity, sunMass, sunRadius, glm::vec3(1.f, 0.5f, 0.3f));
     simulation.addBody(std::move(moon));
     simulation.addBody(std::move(earth));
-    //simulation.addBody(std::move(venus));
-
+    simulation.addBody(std::move(venus));
+    simulation.addBody(std::move(sun));
 	//glm::mat4 view = glm::mat4(1.0f);
     glm::mat4 view = glm::lookAt(
-            glm::vec3(0.0f, 0.0f, 6.0f ), // Move the camera back enough to see both objects
+            glm::vec3(0.0f, 0.0f, 8.0f ), // Move the camera back enough to see both objects
             glm::vec3(0.0f, 0.0f, 0.0f),
             glm::vec3(0.0f, 1.0f, 0.0f)
     );
-	view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
+	view = glm::translate(view, glm::vec3(0.0f, 0.0f, -20.0f));
 
 	glm::mat4 projection = glm::mat4(1.0f);
 	projection = glm::perspective(glm::radians(45.0f), float(SCREEN_WIDTH) / float(SCREEN_HEIGHT), 0.1f, 100.0f);
@@ -89,7 +107,7 @@ int main() {
         // update simulation;
         simulation.update(75);
         // rendering
-		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		shader.use();
