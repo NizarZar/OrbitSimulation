@@ -46,17 +46,28 @@ int main() {
 
     // initialize simulator
     Simulation simulation;
+    glm::vec3 earthPosition(0.0f, 0.0f, 0.0f);
+    glm::vec3 earthVelocity(0.0f, 0.0f, 0.0f);
+    float earthMass = 10000.f;
+    float earthRadius = 0.5f;
 
-    earth = std::make_unique<Body>(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f), 10000.f, 0.3f, glm::vec3(0.0f, 0.5f, 1.0f));
-    moon = std::make_unique<Body>(glm::vec3(2.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.01f, 0.0f), 10.f, 0.1f, glm::vec3(0.8f, 0.8f, 0.8f));
-    venus = std::make_unique<Body>(glm::vec3(-2.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f), 10.f, 0.27f, glm::vec3(1.f, 0.5f, 0.3f));
+    glm::vec3 moonPosition(2.0f, 0.0f, 0.0f);
+    float distance = glm::length(moonPosition - earthPosition);
+    float moonVelocityY = sqrt(G * earthMass / distance);
+    glm::vec3 moonVelocity(0.0f, moonVelocityY, 0.0f);
+    float moonMass = 1.f;
+    float moonRadius = 0.27f;
+
+    earth = std::make_unique<Body>(earthPosition, earthVelocity, earthMass, earthRadius, glm::vec3(0.0f, 0.5f, 1.0f));
+    moon = std::make_unique<Body>(moonPosition, moonVelocity, moonMass, moonRadius, glm::vec3(0.8f, 0.8f, 0.8f));
+    venus = std::make_unique<Body>(glm::vec3(-2.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0015f, 0.0f), 10.f, 0.27f, glm::vec3(1.f, 0.5f, 0.3f));
     simulation.addBody(std::move(moon));
     simulation.addBody(std::move(earth));
     //simulation.addBody(std::move(venus));
 
 	//glm::mat4 view = glm::mat4(1.0f);
     glm::mat4 view = glm::lookAt(
-            glm::vec3(0.0f, 0.0f, 5.0f ), // Move the camera back enough to see both objects
+            glm::vec3(0.0f, 0.0f, 6.0f ), // Move the camera back enough to see both objects
             glm::vec3(0.0f, 0.0f, 0.0f),
             glm::vec3(0.0f, 1.0f, 0.0f)
     );
@@ -76,7 +87,7 @@ int main() {
 		processInput(window);
 
         // update simulation;
-        simulation.update(deltaTime);
+        simulation.update(75);
         // rendering
 		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
