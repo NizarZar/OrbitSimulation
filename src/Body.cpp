@@ -2,21 +2,25 @@
 
 // constants
 const double G = 6.67430e-11;
+const unsigned int MAX_TRAIL_SIZE = 100;
 // Constants for simulation;
 
 Body::Body(glm::vec3 position, glm::vec3 velocity, float mass, float radius, glm::vec3 color) :
         position(position), velocity(velocity), mass(mass), radius(radius), color(color)
     {
 	setupSphere();
+    setupTrail();
 
 }
 Body::~Body() {
 	glDeleteVertexArrays(1, &VAO);
 	glDeleteBuffers(1, &VBO);
     glDeleteBuffers(1, &EBO);
+    glDeleteVertexArrays(1, &trailVAO);
+    glDeleteBuffers(1, &trailVBO);
 }
 
-
+// setting up the sphere (visual)
 void Body::setupSphere() {
     // Generate vertices and indices for a UV sphere
     int stacks = 20;
@@ -79,6 +83,32 @@ void Body::setupSphere() {
     glBindVertexArray(0);
 }
 
+void Body::setupTrail() {
+    glGenVertexArrays(1, &trailVAO);
+    glGenBuffers(1, &trailVBO);
+
+    glBindVertexArray(trailVAO);
+    glBindBuffer(GL_ARRAY_BUFFER, trailVBO);
+    glBufferData(GL_ARRAY_BUFFER, MAX_TRAIL_SIZE * sizeof(glm::vec3), nullptr, GL_DYNAMIC_DRAW);
+
+    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (void*)0);
+    glEnableVertexAttribArray(2);
+
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindVertexArray(0);
+}
+
+void Body::updateTrail() {
+    trail.push_back(position);
+    if(trail.size() > MAX_TRAIL_SIZE){
+        trail.erase(trail.begin());
+    }
+
+    glBindBuffer(GL_ARRAY_BUFFER, trailVBO);
+    glBufferSubData(GL_ARRAY_BUFFER, 0, trail.size() * sizeof(glm::vec3), trail.data());
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+}
+
 void Body::draw(Shader& shader) {
 
 	shader.use();
@@ -89,6 +119,14 @@ void Body::draw(Shader& shader) {
 	glBindVertexArray(VAO);
 	glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
 	glBindVertexArray(0);
+
+    // trail
+    glUniform4f(glGetUniformLocation(shader.getID(), "trailColor"), color.r, color.g, color.b, 1.0f);
+
+    glBindVertexArray(trailVAO);
+    glDrawArrays(GL_LINE_STRIP, 0, trail.size());
+    glBindVertexArray(0);
+
 }
 
 

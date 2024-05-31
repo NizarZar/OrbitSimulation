@@ -6,7 +6,7 @@ void Simulation::addBody(std::unique_ptr<Body> body) {
     bodies.push_back(std::move(body));
 }
 
-
+// calculates gravitational force between 2 objects
 glm::vec3 Simulation::calculateGravitationalForce(Body &body1, Body &body2) {
     glm::vec3 direction = body2.position - body1.position;
     float distance = glm::length(direction);
@@ -16,6 +16,7 @@ glm::vec3 Simulation::calculateGravitationalForce(Body &body1, Body &body2) {
 
 }
 
+// updates the interaction between different objects
 void Simulation::update(float deltaTime) {
     std::vector<glm::vec3> forces(bodies.size(), glm::vec3(0.0f));
 
@@ -31,9 +32,11 @@ void Simulation::update(float deltaTime) {
         glm::vec3 acceleration = forces[i].operator/=(bodies[i]->mass);
         bodies[i]->velocity += acceleration * deltaTime;
         bodies[i]->position += bodies[i]->velocity * deltaTime;
+        bodies[i]->updateTrail();
     }
 }
 
+// rendering
 void Simulation::render(Shader& shader){
     for(auto& body : bodies){
         body->draw(shader);

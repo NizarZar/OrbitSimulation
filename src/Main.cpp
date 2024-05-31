@@ -4,8 +4,8 @@
 #include <cmath>
 #include <memory>
 
-const unsigned int SCREEN_WIDTH = 800;
-const unsigned int SCREEN_HEIGHT = 600;
+const unsigned int SCREEN_WIDTH = 1280;
+const unsigned int SCREEN_HEIGHT = 720;
 
 
 // bodies
@@ -13,6 +13,7 @@ std::unique_ptr<Body> earth;
 std::unique_ptr<Body> moon;
 std::unique_ptr<Body> venus;
 std::unique_ptr<Body> sun;
+std::unique_ptr<Body> jupiter;
 
 double G = 6.67430e-11;
 
@@ -50,21 +51,21 @@ int main() {
 
     glm::vec3 sunPosition(0.0f, 0.0f, 0.0f);
     glm::vec3 sunVelocity(0.0f, 0.0f, 0.0f);
-    float sunMass = 10000.f;
-    float sunRadius = 1.f;
+    float sunMass = 10000000.f;
+    float sunRadius = 1.5f;
 
     glm::vec3 earthPosition(10.f, 0.0f, 0.0f);
     float distanceE = glm::length(earthPosition - sunPosition);
     float earthVelocityY = sqrt(G * sunMass / distanceE);
     glm::vec3 earthVelocity(0.0f, earthVelocityY, 0.0f);
-    float earthMass = 100.f;
-    float earthRadius = 0.3f;
+    float earthMass = 150.f;
+    float earthRadius = 0.41f;
 
     glm::vec3 moonPosition(10.4f, 0.0f, 0.0f);
     float distanceM = glm::length(moonPosition - earthPosition);
     float moonVelocityY = sqrt(G * earthMass / distanceM);
     glm::vec3 moonVelocity(0.0f, moonVelocityY, 0.0f);
-    float moonMass = 5.f;
+    float moonMass = 10.f;
     float moonRadius = 0.08f;
 
     glm::vec3 venusPosition(-5.5f, 0.0f, 0.0f);
@@ -72,28 +73,38 @@ int main() {
     float venusVelocityY = sqrt(G * sunMass / distanceV);
     glm::vec3 venusVelocity(0.0f, venusVelocityY, 0.0f);
     float venusMass = 50.f;
-    float venusRadius = 0.11f;
+    float venusRadius = 0.16f;
+
+    glm::vec3 jupiterPosition(16.f, 0.0f, 0.0f);
+    float distanceJ = glm::length(jupiterPosition - sunPosition);
+    float jupiterVelocityY = sqrt(G * sunMass / distanceJ);
+    glm::vec3 jupiterVelocity(0.0f, jupiterVelocityY, 0.0f);
+    float jupiterMass = 475.f;
+    float jupiterRadius = 0.6f;
 
 
     earth = std::make_unique<Body>(earthPosition, earthVelocity, earthMass, earthRadius, glm::vec3(0.0f, 0.5f, 1.0f));
     moon = std::make_unique<Body>(moonPosition, moonVelocity, moonMass, moonRadius, glm::vec3(0.8f, 0.8f, 0.8f));
     venus = std::make_unique<Body>(venusPosition, venusVelocity, venusMass, venusRadius, glm::vec3(0.4f, 0.5f, 0.3f));
     sun = std::make_unique<Body>(sunPosition, sunVelocity, sunMass, sunRadius, glm::vec3(1.f, 0.5f, 0.3f));
+    jupiter = std::make_unique<Body>(jupiterPosition, jupiterVelocity, jupiterMass, jupiterRadius, glm::vec3(0.3f, 0.2f, 0.1f));
     simulation.addBody(std::move(moon));
     simulation.addBody(std::move(earth));
     simulation.addBody(std::move(venus));
     simulation.addBody(std::move(sun));
+    simulation.addBody(std::move(jupiter));
 	//glm::mat4 view = glm::mat4(1.0f);
     glm::mat4 view = glm::lookAt(
-            glm::vec3(0.0f, 0.0f, 8.0f ), // Move the camera back enough to see both objects
+            glm::vec3(0.0f, 0.0f, 20.0f ), // Move the camera back enough to see both objects
             glm::vec3(0.0f, 0.0f, 0.0f),
             glm::vec3(0.0f, 1.0f, 0.0f)
     );
-	view = glm::translate(view, glm::vec3(0.0f, 0.0f, -20.0f));
+	view = glm::translate(view, glm::vec3(0.0f, 0.0f, -25.0f));
 
 	glm::mat4 projection = glm::mat4(1.0f);
 	projection = glm::perspective(glm::radians(45.0f), float(SCREEN_WIDTH) / float(SCREEN_HEIGHT), 0.1f, 100.0f);
 
+    glm::vec4 trailColor(1.0f, 1.0f, 1.0f, 1.0f);
 
     float lastFrame = 0.0f;
 	while (!glfwWindowShouldClose(window)) {
@@ -105,7 +116,7 @@ int main() {
 		processInput(window);
 
         // update simulation;
-        simulation.update(75);
+        simulation.update(15);
         // rendering
 		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -118,6 +129,7 @@ int main() {
 		int projectionLocation = glGetUniformLocation(shader.getID(), "projection");
 		glUniformMatrix4fv(projectionLocation, 1, GL_FALSE, glm::value_ptr(projection));
 
+        glUniform4fv(glGetUniformLocation(shader.getID(), "trailColor"), 1, &trailColor[0]);
         simulation.render(shader);
 
 		// swap buffers and pull IO events (callbacks)
